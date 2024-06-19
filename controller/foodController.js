@@ -51,4 +51,24 @@ const deleteFoodById = async (req, res) => {
 };
 
 
-module.exports = { addFood,getFood ,deleteFoodById};
+
+//add food from frontend at one time many values
+const addMany= async(req,res)=>{
+  try {
+    const { food_list, menu_list } = req.body;
+    try {
+        // Insert food items into the database
+        await Food.insertMany(food_list);
+        // Insert menu items into the database
+        // await Menu.insertMany(menu_list);
+        res.status(200).send('Data inserted successfully');
+    } catch (error) {
+        console.error('Error inserting data:', error);
+        res.status(500).send('Error inserting data');
+    }
+  } catch (error) {
+    
+  }
+}
+
+module.exports = { addFood,getFood ,deleteFoodById, addMany};

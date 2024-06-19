@@ -4,6 +4,8 @@ require('dotenv').config();
 const ConnectDB = require('./db/database');
 const foodRouter = require('./routes/foodRoute');
 const userRoutes = require('./routes/userRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+// const insertData = require('./default');
 //app config
 const app=express()
 const PORT=process.env.PORT||4000
@@ -17,8 +19,10 @@ app.use(cors())
 //api end point
 app.use('/api/food', foodRouter)
 app.use('/api/user',userRoutes)
-//listen to port
+app.use('/api/cart',cartRoutes)
+//listen to port 
 ConnectDB()
 app.listen(PORT,()=>{
     console.log(`The Web is running on port ${PORT}`)
 })
+// insertData()

@@ -12,7 +12,7 @@ const userSchema = mongoose.Schema({
   },
   isAdmin: { type: Boolean, default: false },
   cartData: { type: Object, default: {} },
-});
+},{ minimize: false });
 //create a model
 const User = mongoose.model("User", userSchema);
 module.exports = User;

@@ -5,7 +5,8 @@ const fs = require("fs");
 const path = require("path");
 const PDFDocument = require("pdfkit");
 // const frontendurl = "http://localhost:3000";
-const frontendurl='https://food-application-web-tios.onrender.com'
+const frontendurl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const placeOrder = async (req, res) => {

@@ -4,10 +4,9 @@ const User = require("../models/userModel");
 const fs = require("fs");
 const path = require("path");
 const PDFDocument = require("pdfkit");
-const frontendurl = "http://localhost:3000";
-const key =
-  "sk_test_51PTWJ008RwjpCyiKO1V0JGTSDVICyXg57qxNOe7X58EoLfrichOwKvZkZzwRWi37eyIsOUTeu6pFkkIDR4mMHlv100e4VffA0J";
-const stripe = new Stripe(key);
+// const frontendurl = "http://localhost:3000";
+const frontendurl='https://food-application-web-tios.onrender.com'
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const placeOrder = async (req, res) => {
   const { amount, items, address } = req.body;
@@ -63,7 +62,7 @@ const placeOrder = async (req, res) => {
       __dirname,
       `../receipts/receipt-${newOrder._id}.pdf`
     );
-    console.log(pdfPath);
+    // console.log(pdfPath);
     generateReceiptPDF(newOrder, pdfPath);
     // 5. Send response with session URL to frontend
     res.json({
@@ -119,4 +118,15 @@ const generateReceiptPDF = (order, filePath) => {
 
   doc.end();
 };
-module.exports = { placeOrder, verifyOrder };
+//user order
+const userOrder= async(req,res)=>{
+  try {
+    const order= await Order.find({userId:req.userId})
+    res.json({success:true,data:order})
+    
+  } catch (error) {
+    console.log('The error in getting the user order is',error)
+    res.json({ success: false, message: error.message });
+  }
+}
+module.exports = { placeOrder, verifyOrder ,userOrder};

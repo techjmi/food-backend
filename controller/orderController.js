@@ -130,4 +130,32 @@ const userOrder= async(req,res)=>{
     res.json({ success: false, message: error.message });
   }
 }
-module.exports = { placeOrder, verifyOrder ,userOrder};
+//get list of all order by specifc user to show in admin panel
+const Allorder= async(req,res)=>{
+  try {
+    const orders= await Order.find({})
+    res.json({success:true, data:orders})
+    
+  } catch (error) {
+    console.log('The error while getting the list of the order is',error.message)
+    res.json({success:false, message:'Error in getting the order list'})
+  }
+}
+//api to change the order status
+const updateStatus=async(req,res)=>{
+ 
+  const { orderId, status } = req.body;
+// console.log(orderId, status)
+    try {
+        // Find the order by orderId and update its status
+        const updatedOrder = await Order.findByIdAndUpdate(orderId, { status }, { new: true });
+        if (!updatedOrder) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+        res.json({ success: true, data: updatedOrder });
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        res.status(500).json({ success: false, message: 'Failed to update order status' });
+    }
+}
+module.exports = { placeOrder, verifyOrder ,userOrder,Allorder, updateStatus};

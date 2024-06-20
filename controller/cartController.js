@@ -39,7 +39,7 @@ const removetoCart= async(req, res)=>{
         // console.log(itemId)
         const userData=await User.findById(userId)
         const cartData= userData.cartData
-        if(cartData[itemId]>0){
+        if(cartData[itemId]>=0){
             cartData[itemId]-=1
         }
         await User.findByIdAndUpdate(userId, { cartData });

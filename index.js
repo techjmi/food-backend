@@ -21,6 +21,14 @@ app.use(cors())
 // res.send('API is Working')
 // }) 
 //api end point
+function setFrontendUrl(req, res, next) {
+    const protocol = req.protocol;
+    const host = req.get('host');
+    process.env.FRONTEND_URL = `${protocol}://${host}`;
+    next();
+  }
+  
+  app.use(setFrontendUrl);
 app.use('/api/food', foodRouter)
 app.use('/api/user',userRoutes)
 app.use('/api/cart',cartRoutes) 

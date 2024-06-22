@@ -29,7 +29,7 @@ const addFood = async (req, res) => {
 const getFood=async(req,res)=>{
     try {
         const foods= await Food.find({})
-        res.json(foods)
+        res.json({success:true, foods})
         // console.log({)
     } catch (error) {
         console.log('The Error While Getting the food is', error.message)

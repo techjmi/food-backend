@@ -7,5 +7,5 @@ orderRoutes.post('/verify',verifyOrder)
 orderRoutes.get('/user-order',authMiddleware, userOrder)
 orderRoutes.get('/all-order',authMiddleware, AllOrder)
 orderRoutes.get('/top-order',authMiddleware,GetTopOrder)
-orderRoutes.put('/status', updateStatus)
+orderRoutes.put('/status', authMiddleware,updateStatus)
 module.exports=orderRoutes

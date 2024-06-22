@@ -115,7 +115,7 @@ const generateReceiptPDF = (order, filePath) => {
   doc.end();
 };
 
-// Get User Orders
+// Get User Orders or order of thier own
 const userOrder = async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.userId });
@@ -129,12 +129,12 @@ const userOrder = async (req, res) => {
 // Get All Orders
 const AllOrder = async (req, res) => {
   if (!req.user.isAdmin) {
-    res.json({
+    return res.json({
       success: false,
       message: "You are not allowed to see the details only can see",
     });
   }
-  try {
+  try { 
     const orders = await Order.find({});
     const totalOrders = await Order.countDocuments();
     const now = new Date();
@@ -187,7 +187,7 @@ const updateStatus = async (req, res) => {
 //get all users and top users
 const GetTopOrder = async (req, res) => {
   if(!req.user.isAdmin){
-    res.json({success:false, message:"You are not allowed to this only admin can do this"})
+     return res.json({success:false, message:"You are not allowed to this only admin can do this"})
   }
   try {
     const topUsers = await Order.aggregate([

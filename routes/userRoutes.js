@@ -5,5 +5,5 @@ const userRoutes=express.Router()
 userRoutes.post('/signup', signUp)
 userRoutes.post('/login', userLogin)
 userRoutes.get('/userinfo', authMiddleware, getUserDetails)
-userRoutes.get('/getuser',authMiddleware, fetchUser)
+userRoutes.get('/getuser',authMiddleware,fetchUser)
 module.exports=userRoutes

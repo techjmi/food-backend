@@ -9,7 +9,7 @@ const OrderSchema= mongoose.Schema({
     date:{type:Date, default:Date.now()},
     payment:{type:Boolean,default:false},
 
-})
+},{timestamps:true})
 
 //create model
 const Order= mongoose.model('Order', OrderSchema)

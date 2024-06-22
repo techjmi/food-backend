@@ -4,24 +4,19 @@ const User = require("../models/userModel");
 const fs = require("fs");
 const path = require("path");
 const PDFDocument = require("pdfkit");
-// const frontendurl = "http://localhost:3000";
-const frontendurl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const frontendurl = process.env.FRONTEND_URL || "http://localhost:3000";
 
+// Place Order
 const placeOrder = async (req, res) => {
   const { amount, items, address } = req.body;
   const userId = req.userId;
 
   try {
     // 1. Create a new Order in the database
-    const newOrder = new Order({
-      amount,
-      items,
-      address,
-      userId,
-    });
-    await newOrder.save(); // Save the new order in the database
+    const newOrder = new Order({ amount, items, address, userId });
+    await newOrder.save();
 
     // 2. Update the User model to clear cart data
     await User.findByIdAndUpdate(userId, { cartData: {} });
@@ -29,10 +24,8 @@ const placeOrder = async (req, res) => {
     // 3. Prepare line items for Stripe checkout session
     const line_items = items.map((item) => ({
       price_data: {
-        currency: "usd", // Assuming your Stripe account is set up for USD
-        product_data: {
-          name: item.name,
-        },
+        currency: "usd",
+        product_data: { name: item.name },
         unit_amount: item.price * 100, // Amount in cents
       },
       quantity: item.quantity,
@@ -41,10 +34,8 @@ const placeOrder = async (req, res) => {
     // Add delivery charge as a line item
     line_items.push({
       price_data: {
-        currency: "usd", // Assuming your Stripe account is set up for USD
-        product_data: {
-          name: "Delivery Charge",
-        },
+        currency: "usd",
+        product_data: { name: "Delivery Charge" },
         unit_amount: 50 * 100, // Assuming delivery charge is USD 50
       },
       quantity: 1,
@@ -58,14 +49,15 @@ const placeOrder = async (req, res) => {
       success_url: `${frontendurl}/verify?success=true&orderId=${newOrder._id}`,
       cancel_url: `${frontendurl}/verify?success=false&orderId=${newOrder._id}`,
     });
-    //pdf
+
+    // 5. Generate PDF receipt
     const pdfPath = path.join(
       __dirname,
       `../receipts/receipt-${newOrder._id}.pdf`
     );
-    // console.log(pdfPath);
     generateReceiptPDF(newOrder, pdfPath);
-    // 5. Send response with session URL to frontend
+
+    // 6. Send response with session URL to frontend
     res.json({
       success: true,
       session_url: session.url,
@@ -77,7 +69,7 @@ const placeOrder = async (req, res) => {
   }
 };
 
-//verify order
+// Verify Order
 const verifyOrder = async (req, res) => {
   const { orderId, success } = req.body;
   try {
@@ -86,7 +78,11 @@ const verifyOrder = async (req, res) => {
       res.json({ success: true, message: "Payment done" });
     } else {
       await Order.findByIdAndUpdate(orderId);
-      res.json({ success: false, message: "Payment failed" ,receipt_url: `/receipts/receipt-${orderId}.pdf`});
+      res.json({
+        success: false,
+        message: "Payment failed",
+        receipt_url: `/receipts/receipt-${orderId}.pdf`,
+      });
     }
   } catch (error) {
     console.log("The Error In verify Payment is", error.message);
@@ -94,7 +90,7 @@ const verifyOrder = async (req, res) => {
   }
 };
 
-//pdf generator function
+// Generate PDF Receipt
 const generateReceiptPDF = (order, filePath) => {
   const doc = new PDFDocument();
   const stream = fs.createWriteStream(filePath);
@@ -116,46 +112,129 @@ const generateReceiptPDF = (order, filePath) => {
   });
 
   doc.text(`Delivery Charge: $50.00`);
-
   doc.end();
 };
-//user order
-const userOrder= async(req,res)=>{
+
+// Get User Orders
+const userOrder = async (req, res) => {
   try {
-    const order= await Order.find({userId:req.userId})
-    res.json({success:true,data:order})
-    
+    const orders = await Order.find({ userId: req.userId });
+    res.json({ success: true, data: orders });
   } catch (error) {
-    console.log('The error in getting the user order is',error)
+    console.log("The error in getting the user order is", error);
     res.json({ success: false, message: error.message });
   }
-}
-//get list of all order by specifc user to show in admin panel
-const Allorder= async(req,res)=>{
-  try {
-    const orders= await Order.find({})
-    res.json({success:true, data:orders})
-    
-  } catch (error) {
-    console.log('The error while getting the list of the order is',error.message)
-    res.json({success:false, message:'Error in getting the order list'})
+};
+
+// Get All Orders
+const AllOrder = async (req, res) => {
+  if (!req.user.isAdmin) {
+    res.json({
+      success: false,
+      message: "You are not allowed to see the details only can see",
+    });
   }
-}
-//api to change the order status
-const updateStatus=async(req,res)=>{
- 
+  try {
+    const orders = await Order.find({});
+    const totalOrders = await Order.countDocuments();
+    const now = new Date();
+    const oneMonthAgo = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      now.getDate()
+    );
+    const lastMonthOrders = await Order.countDocuments({
+      createdAt: { $gte: oneMonthAgo },
+    });
+
+    res.json({
+      success: true,
+      data: orders,
+      lastMonthOrders,
+      totalOrders,
+    });
+  } catch (error) {
+    console.log(
+      "The error while getting the list of the order is",
+      error.message
+    );
+    res.json({ success: false, message: "Error in getting the order list" });
+  }
+};
+
+// Update Order Status
+const updateStatus = async (req, res) => {
   const { orderId, status } = req.body;
-// console.log(orderId, status)
-    try {
-        // Find the order by orderId and update its status
-        const updatedOrder = await Order.findByIdAndUpdate(orderId, { status }, { new: true });
-        if (!updatedOrder) {
-            return res.status(404).json({ success: false, message: 'Order not found' });
-        }
-        res.json({ success: true, data: updatedOrder });
-    } catch (error) {
-        console.error('Error updating order status:', error);
-        res.status(500).json({ success: false, message: 'Failed to update order status' });
+  try {
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true }
+    );
+    if (!updatedOrder) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
-}
-module.exports = { placeOrder, verifyOrder ,userOrder,Allorder, updateStatus};
+    res.json({ success: true, data: updatedOrder });
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update order status" });
+  }
+};
+//get all users and top users
+const GetTopOrder = async (req, res) => {
+  if(!req.user.isAdmin){
+    res.json({success:false, message:"You are not allowed to this only admin can do this"})
+  }
+  try {
+    const topUsers = await Order.aggregate([
+      { $group: { _id: "$userId", orderCount: { $sum: 1 } } }, // Group orders by userId and count them
+      { $sort: { orderCount: -1 } }, // Sort in descending order based on orderCount
+      { $limit: 5 }, // Limit to top 5 users
+    ]);
+    // Extract userIds from topUsers
+    const userIds = topUsers.map((user) => user._id);
+
+    // Fetch user details for the top users
+    const usersData = await User.find({ _id: { $in: userIds } }).select(
+      "name email profilePic"
+    );
+    // Combine order count with user details
+    const result = topUsers.map((user) => {
+      const userDetails = usersData.find(
+        (u) => u._id.toString() === user._id.toString()
+      );
+      return {
+        userId: user._id,
+        orderCount: user.orderCount,
+        name: userDetails.name,
+        email: userDetails.email,
+        profilePic: userDetails.profilePic,
+      };
+    });
+
+    res.json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    console.error("Error fetching top users by order count:", error.message);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to fetch top users by order count",
+      });
+  }
+};
+module.exports = {
+  placeOrder,
+  verifyOrder,
+  userOrder,
+  AllOrder,
+  updateStatus,
+  GetTopOrder,
+};

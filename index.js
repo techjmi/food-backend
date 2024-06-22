@@ -16,15 +16,15 @@ const PORT = process.env.PORT || 4000;
 app.use(express.static('public'));
 
 // Middleware to capture the current URL and set it as an environment variable
-function setFrontendUrl(req, res, next) {
-    const protocol = req.protocol;
-    const host = req.get('host');
-    process.env.FRONTEND_URL = `${protocol}://${host}`;
-    console.log(`FRONTEND_URL set to: ${process.env.FRONTEND_URL}`); // Log for debugging
-    next();
-}
+// function setFrontendUrl(req, res, next) {
+//     const protocol = req.protocol;
+//     const host = req.get('host');
+//     process.env.FRONTEND_URL = `${protocol}://${host}`;
+//     console.log(`FRONTEND_URL set to: ${process.env.FRONTEND_URL}`); 
+//     next();
+// }
 
-app.use(setFrontendUrl);
+// app.use(setFrontendUrl);
 
 // Middleware
 app.use(express.json());
